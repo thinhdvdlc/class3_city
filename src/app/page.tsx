@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Coins, Settings, ShoppingBag, Map, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';
@@ -11,6 +11,8 @@ import { QuizSession } from '@/components/game/QuizSession';
 import { startCityBGM, stopCityBGM } from '@/utils/sound';
 
 export default function Home() {
+  const constraintsRef = useRef<HTMLDivElement>(null);
+
   // Trạng thái (Level) của từng tòa nhà riêng biệt
   const [mathLevel, setMathLevel] = useState(1);
   const [vietnameseLevel, setVietnameseLevel] = useState(1);
@@ -62,10 +64,15 @@ export default function Home() {
   };
 
   return (
-    <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
+    <div ref={constraintsRef} className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
       
-      {/* Khung Bản đồ Fullscreen (Mô phỏng object-fit: cover cho cả container) */}
-      <main className="relative flex-none min-w-full min-h-full aspect-[3/2] z-20">
+      {/* Khung Bản đồ Fullscreen có thể kéo vuốt trên Mobile */}
+      <motion.main 
+        drag
+        dragConstraints={constraintsRef}
+        dragElastic={0.1}
+        className="relative flex-none min-w-full min-h-full aspect-[3/2] z-20 cursor-grab active:cursor-grabbing"
+      >
         
         {/* Background Thành Phố */}
         <Image 
@@ -164,7 +171,7 @@ export default function Home() {
           </div>
         </motion.div>
 
-      </main>
+      </motion.main>
 
       {/* HUD (Heads Up Display) - Top Bar */}
       <header className="absolute top-2 sm:top-6 left-2 sm:left-6 right-2 sm:right-6 flex justify-between items-start z-50 pointer-events-none">
