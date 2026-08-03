@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Coins, Settings, ShoppingBag, Map, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';
@@ -11,7 +11,6 @@ import { QuizSession } from '@/components/game/QuizSession';
 import { startCityBGM, stopCityBGM } from '@/utils/sound';
 
 export default function Home() {
-  const constraintsRef = useRef<HTMLDivElement>(null);
 
   // Trạng thái (Level) của từng tòa nhà riêng biệt
   const [mathLevel, setMathLevel] = useState(1);
@@ -64,14 +63,16 @@ export default function Home() {
   };
 
   return (
-    <div ref={constraintsRef} className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
       
-      {/* Khung Bản đồ Fullscreen có thể kéo vuốt trên Mobile */}
-      <motion.main 
-        drag
-        dragConstraints={constraintsRef}
-        dragElastic={0.1}
-        className="relative flex-none min-w-full min-h-full aspect-[3/2] z-20 cursor-grab active:cursor-grabbing"
+      {/* Khung Bản đồ (Luôn hiển thị toàn bộ 100% không cần cuộn) */}
+      <main 
+        className="relative flex-none z-20"
+        style={{
+          width: '100%',
+          maxWidth: 'calc(100dvh * 1.5)',
+          aspectRatio: '3/2'
+        }}
       >
         
         {/* Background Thành Phố */}
@@ -89,7 +90,7 @@ export default function Home() {
         {/* BANK (Ngân hàng Toán học) */}
         <motion.div 
           onClick={() => setActiveSubject('math')}
-          className="absolute top-[52%] left-[12%] flex flex-col items-center cursor-pointer group"
+          className="absolute top-[52%] left-[12%] w-[16%] flex flex-col items-center cursor-pointer group"
           animate={{ scale: getScale(mathLevel), y: [0, -10, 0] }}
           whileHover={{ scale: getScale(mathLevel) + 0.05 }}
           transition={{ 
@@ -98,7 +99,7 @@ export default function Home() {
           }}
           style={{ transformOrigin: 'bottom center' }}
         >
-          <div className="relative w-[18vw] sm:w-[15vw] md:w-[240px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
+          <div className="relative w-full aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
               src="/bank-transparent.png" 
               alt="Ngân hàng Toán" 
@@ -107,10 +108,10 @@ export default function Home() {
             />
           </div>
           {/* Nhãn */}
-          <div className="mt-[-10%] sm:mt-[-20px] bg-blue-600 px-3 sm:px-6 py-1 sm:py-2 rounded-full border-2 sm:border-4 border-white shadow-xl z-10">
-            <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Toán Học</span>
+          <div className="mt-[-10%] sm:mt-[-20px] bg-blue-600 px-2 py-1 sm:px-6 sm:py-2 rounded-full border-[1px] sm:border-4 border-white shadow-xl z-10">
+            <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Toán Học</span>
           </div>
-          <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
+          <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
             {mathLevel}
           </div>
         </motion.div>
@@ -118,7 +119,7 @@ export default function Home() {
         {/* LIBRARY (Thư viện Tiếng Việt) */}
         <motion.div 
           onClick={() => setActiveSubject('vietnamese')}
-          className="absolute top-[18%] right-[22%] flex flex-col items-center cursor-pointer group"
+          className="absolute top-[18%] right-[22%] w-[19%] flex flex-col items-center cursor-pointer group"
           animate={{ scale: getScale(vietnameseLevel), y: [0, -15, 0] }}
           whileHover={{ scale: getScale(vietnameseLevel) + 0.05 }}
           transition={{ 
@@ -127,7 +128,7 @@ export default function Home() {
           }}
           style={{ transformOrigin: 'bottom center' }}
         >
-          <div className="relative w-[20vw] sm:w-[18vw] md:w-[280px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
+          <div className="relative w-full aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
               src="/library-transparent.png" 
               alt="Thư viện Tiếng Việt" 
@@ -135,10 +136,10 @@ export default function Home() {
               className="object-contain transform scale-[1.3] origin-bottom" 
             />
           </div>
-          <div className="mt-[-10%] sm:mt-[-20px] bg-rose-500 px-3 sm:px-6 py-1 sm:py-2 rounded-full border-2 sm:border-4 border-white shadow-xl z-10">
-            <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Việt</span>
+          <div className="mt-[-10%] sm:mt-[-20px] bg-rose-500 px-2 py-1 sm:px-6 sm:py-2 rounded-full border-[1px] sm:border-4 border-white shadow-xl z-10">
+            <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Việt</span>
           </div>
-          <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
+          <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
             {vietnameseLevel}
           </div>
         </motion.div>
@@ -146,7 +147,7 @@ export default function Home() {
         {/* AIRPORT (Sân bay Tiếng Anh) */}
         <motion.div 
           onClick={() => setActiveSubject('english')}
-          className="absolute top-[62%] right-[12%] flex flex-col items-center cursor-pointer group"
+          className="absolute top-[62%] right-[12%] w-[22%] flex flex-col items-center cursor-pointer group"
           animate={{ scale: getScale(englishLevel), y: [0, -8, 0] }}
           whileHover={{ scale: getScale(englishLevel) + 0.05 }}
           transition={{ 
@@ -155,7 +156,7 @@ export default function Home() {
           }}
           style={{ transformOrigin: 'bottom center' }}
         >
-          <div className="relative w-[24vw] sm:w-[22vw] md:w-[320px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
+          <div className="relative w-full aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
               src="/airport-transparent.png" 
               alt="Sân bay Tiếng Anh" 
@@ -163,15 +164,15 @@ export default function Home() {
               className="object-contain transform scale-[1.3] origin-bottom" 
             />
           </div>
-          <div className="mt-[-10%] sm:mt-[-20px] bg-indigo-500 px-3 sm:px-6 py-1 sm:py-2 rounded-full border-2 sm:border-4 border-white shadow-xl z-10">
-            <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Anh</span>
+          <div className="mt-[-10%] sm:mt-[-20px] bg-indigo-500 px-2 py-1 sm:px-6 sm:py-2 rounded-full border-[1px] sm:border-4 border-white shadow-xl z-10">
+            <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Anh</span>
           </div>
-          <div className="absolute top-2 right-[-5%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
+          <div className="absolute top-2 right-[-5%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
             {englishLevel}
           </div>
         </motion.div>
 
-      </motion.main>
+      </main>
 
       {/* HUD (Heads Up Display) - Top Bar */}
       <header className="absolute top-2 sm:top-6 left-2 sm:left-6 right-2 sm:right-6 flex justify-between items-start z-50 pointer-events-none">
