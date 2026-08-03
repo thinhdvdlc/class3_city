@@ -8,17 +8,14 @@ import { Subject } from '@/data/questions';
 import { TopicId } from '@/data/generator';
 import { TopicSelection } from '@/components/game/TopicSelection';
 import { QuizSession } from '@/components/game/QuizSession';
+import { LoginScreen } from '@/components/game/LoginScreen';
 import { startCityBGM, stopCityBGM } from '@/utils/sound';
+import { supabase, UserProfile } from '@/utils/supabase';
 
 export default function Home() {
 
-  // Trạng thái (Level) của từng tòa nhà riêng biệt
-  const [mathLevel, setMathLevel] = useState(1);
-  const [vietnameseLevel, setVietnameseLevel] = useState(1);
-  const [englishLevel, setEnglishLevel] = useState(1);
-  
-  // Tài sản của người chơi
-  const [coins, setCoins] = useState(1250);
+  // Trạng thái (Level) của từng tòa nhà riêng biệt - BÂY GIỜ ĐƯỢC QUẢN LÝ QUA CURRENT_USER
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   // Điều khiển âm thanh toàn cục (Mặc định tắt do chính sách autoplay của trình duyệt)
   const [isMuted, setIsMuted] = useState(true);
@@ -44,23 +41,53 @@ export default function Home() {
   };
 
   // Xử lý khi Kết thúc Session (Bấm Dừng hoặc đủ 100 câu)
-  const handleSessionEnd = (coinsEarned: number, correctAnswers: number) => {
+  const handleSessionEnd = async (coinsEarned: number, correctAnswers: number) => {
+    if (!currentUser) return;
+
+    let updatedProfile = { ...currentUser };
+    
+    // Cộng vàng
+    updatedProfile.coins += coinsEarned;
+
+    // Cộng level (Cứ 3 câu đúng = 1 Level)
+    const levelsGained = Math.floor(correctAnswers / 3);
+    
     if (activeSubject === 'math') {
-      setMathLevel(prev => prev + Math.floor(correctAnswers / 3)); // Cứ 3 câu đúng = 1 Level
+      updatedProfile.math_level += levelsGained;
     }
     if (activeSubject === 'vietnamese') {
-      setVietnameseLevel(prev => prev + Math.floor(correctAnswers / 3));
+      updatedProfile.vietnamese_level += levelsGained;
     }
     if (activeSubject === 'english') {
-      setEnglishLevel(prev => prev + Math.floor(correctAnswers / 3));
+      updatedProfile.english_level += levelsGained;
     }
     
-    setCoins(prev => prev + coinsEarned);
+    // Cập nhật State nội bộ ngay lập tức để giao diện không bị giật
+    setCurrentUser(updatedProfile);
+    
+    // Lưu lên Cloud (Supabase) ngầm (Background)
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          coins: updatedProfile.coins,
+          math_level: updatedProfile.math_level,
+          vietnamese_level: updatedProfile.vietnamese_level,
+          english_level: updatedProfile.english_level
+        })
+        .eq('name', updatedProfile.name);
+    } catch (err) {
+      console.error("Lỗi khi lưu dữ liệu:", err);
+    }
     
     // Đóng toàn bộ Modal
     setActiveTopic(null);
     setActiveSubject(null);
   };
+
+  if (!currentUser) {
+    return <LoginScreen onLoginSuccess={(profile) => setCurrentUser(profile)} />;
+  }
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
@@ -91,8 +118,8 @@ export default function Home() {
         <motion.div 
           onClick={() => setActiveSubject('math')}
           className="absolute top-[52%] left-[12%] w-[16%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(mathLevel), y: [0, -10, 0] }}
-          whileHover={{ scale: getScale(mathLevel) + 0.05 }}
+          animate={{ scale: getScale(currentUser.math_level), y: [0, -10, 0] }}
+          whileHover={{ scale: getScale(currentUser.math_level) + 0.05 }}
           transition={{ 
             y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
@@ -112,7 +139,7 @@ export default function Home() {
             <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Toán Học</span>
           </div>
           <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
-            {mathLevel}
+            {currentUser.math_level}
           </div>
         </motion.div>
 
@@ -120,8 +147,8 @@ export default function Home() {
         <motion.div 
           onClick={() => setActiveSubject('vietnamese')}
           className="absolute top-[18%] right-[22%] w-[19%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(vietnameseLevel), y: [0, -15, 0] }}
-          whileHover={{ scale: getScale(vietnameseLevel) + 0.05 }}
+          animate={{ scale: getScale(currentUser.vietnamese_level), y: [0, -15, 0] }}
+          whileHover={{ scale: getScale(currentUser.vietnamese_level) + 0.05 }}
           transition={{ 
             y: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
@@ -140,7 +167,7 @@ export default function Home() {
             <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Việt</span>
           </div>
           <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
-            {vietnameseLevel}
+            {currentUser.vietnamese_level}
           </div>
         </motion.div>
 
@@ -148,8 +175,8 @@ export default function Home() {
         <motion.div 
           onClick={() => setActiveSubject('english')}
           className="absolute top-[62%] right-[12%] w-[22%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(englishLevel), y: [0, -8, 0] }}
-          whileHover={{ scale: getScale(englishLevel) + 0.05 }}
+          animate={{ scale: getScale(currentUser.english_level), y: [0, -8, 0] }}
+          whileHover={{ scale: getScale(currentUser.english_level) + 0.05 }}
           transition={{ 
             y: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
@@ -168,7 +195,7 @@ export default function Home() {
             <span className="font-black text-white text-[8px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Anh</span>
           </div>
           <div className="absolute top-2 right-[-5%] bg-amber-400 text-amber-900 font-black text-[10px] sm:text-xl w-6 h-6 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-[1px] sm:border-4 border-white z-20">
-            {englishLevel}
+            {currentUser.english_level}
           </div>
         </motion.div>
 
@@ -183,7 +210,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col pr-4">
               <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest drop-shadow-sm">Thị trưởng</span>
-              <span className="font-extrabold text-xl text-slate-800 drop-shadow-sm leading-none tracking-wide">Đinh Bảo Kha</span>
+              <span className="font-extrabold text-xl text-slate-800 drop-shadow-sm leading-none tracking-wide">{currentUser.name}</span>
             </div>
           </div>
         </div>
@@ -192,7 +219,7 @@ export default function Home() {
           <div className="bg-gradient-to-b from-amber-400 to-amber-500 px-6 py-3 rounded-full shadow-[0_6px_0_#b45309] flex items-center gap-3 border-4 border-white transform transition hover:translate-y-1 hover:shadow-[0_2px_0_#b45309] cursor-pointer">
             <Coins className="text-amber-100 w-7 h-7 drop-shadow-md fill-amber-300" />
             <span className="font-extrabold text-2xl text-amber-950 tracking-wide drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
-              {coins.toLocaleString()}
+              {currentUser.coins.toLocaleString()}
             </span>
           </div>
           
