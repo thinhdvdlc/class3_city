@@ -1,16 +1,64 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, Coins, Settings, ShoppingBag, Map } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Coins, Settings, ShoppingBag, Map, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';
+import { Subject } from '@/data/questions';
+import { TopicId } from '@/data/generator';
+import { TopicSelection } from '@/components/game/TopicSelection';
+import { QuizSession } from '@/components/game/QuizSession';
+import { startCityBGM, stopCityBGM } from '@/utils/sound';
 
 export default function Home() {
-  const [level, setLevel] = useState(1);
+  // Trạng thái (Level) của từng tòa nhà riêng biệt
+  const [mathLevel, setMathLevel] = useState(1);
+  const [vietnameseLevel, setVietnameseLevel] = useState(1);
+  const [englishLevel, setEnglishLevel] = useState(1);
+  
+  // Tài sản của người chơi
+  const [coins, setCoins] = useState(1250);
 
-  // Tính toán độ lớn của tòa nhà dựa trên Level (Tối đa x2.5 lần ở level 99)
+  // Điều khiển âm thanh toàn cục (Mặc định tắt do chính sách autoplay của trình duyệt)
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Điều khiển Luồng Trò chơi
+  const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
+  const [activeTopic, setActiveTopic] = useState<TopicId | null>(null);
+
+  // Quản lý nhạc nền Thành phố
+  useEffect(() => {
+    if (!isMuted && !activeTopic) {
+      startCityBGM();
+    } else {
+      stopCityBGM();
+    }
+    
+    return () => stopCityBGM();
+  }, [isMuted, activeTopic]);
+
+  // Tính toán độ lớn của tòa nhà dựa trên Level
   const getScale = (lvl: number) => {
-    return 1 + (lvl * 0.015);
+    return 1 + (lvl * 0.02); // Mỗi level tăng 2% kích thước
+  };
+
+  // Xử lý khi Kết thúc Session (Bấm Dừng hoặc đủ 100 câu)
+  const handleSessionEnd = (coinsEarned: number, correctAnswers: number) => {
+    if (activeSubject === 'math') {
+      setMathLevel(prev => prev + Math.floor(correctAnswers / 3)); // Cứ 3 câu đúng = 1 Level
+    }
+    if (activeSubject === 'vietnamese') {
+      setVietnameseLevel(prev => prev + Math.floor(correctAnswers / 3));
+    }
+    if (activeSubject === 'english') {
+      setEnglishLevel(prev => prev + Math.floor(correctAnswers / 3));
+    }
+    
+    setCoins(prev => prev + coinsEarned);
+    
+    // Đóng toàn bộ Modal
+    setActiveTopic(null);
+    setActiveSubject(null);
   };
 
   return (
@@ -31,19 +79,17 @@ export default function Home() {
         {/* Lớp phủ mờ nhẹ */}
         <div className="absolute inset-0 bg-white/10 backdrop-blur-[0.5px]"></div>
         
-        {/* BANK (Ngân hàng Toán học) - Bãi đất góc trái dưới */}
+        {/* BANK (Ngân hàng Toán học) */}
         <motion.div 
+          onClick={() => setActiveSubject('math')}
           className="absolute top-[52%] left-[12%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(level), y: [0, -10, 0] }}
-          whileHover={{ scale: getScale(level) + 0.05 }}
+          animate={{ scale: getScale(mathLevel), y: [0, -10, 0] }}
+          whileHover={{ scale: getScale(mathLevel) + 0.05 }}
           transition={{ 
             y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
           }}
           style={{ transformOrigin: 'bottom center' }}
-          drag
-          dragMomentum={false}
-          whileDrag={{ scale: getScale(level) + 0.1, zIndex: 100, opacity: 0.8 }}
         >
           <div className="relative w-[18vw] sm:w-[15vw] md:w-[240px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
@@ -58,23 +104,21 @@ export default function Home() {
             <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Toán Học</span>
           </div>
           <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
-            {level}
+            {mathLevel}
           </div>
         </motion.div>
 
-        {/* LIBRARY (Thư viện Tiếng Việt) - Bãi đất góc phải trên (Cạnh hồ) */}
+        {/* LIBRARY (Thư viện Tiếng Việt) */}
         <motion.div 
+          onClick={() => setActiveSubject('vietnamese')}
           className="absolute top-[18%] right-[22%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(level), y: [0, -15, 0] }}
-          whileHover={{ scale: getScale(level) + 0.05 }}
+          animate={{ scale: getScale(vietnameseLevel), y: [0, -15, 0] }}
+          whileHover={{ scale: getScale(vietnameseLevel) + 0.05 }}
           transition={{ 
             y: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
           }}
           style={{ transformOrigin: 'bottom center' }}
-          drag
-          dragMomentum={false}
-          whileDrag={{ scale: getScale(level) + 0.1, zIndex: 100, opacity: 0.8 }}
         >
           <div className="relative w-[20vw] sm:w-[18vw] md:w-[280px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
@@ -88,23 +132,21 @@ export default function Home() {
             <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Việt</span>
           </div>
           <div className="absolute top-0 right-[-10%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
-            {level}
+            {vietnameseLevel}
           </div>
         </motion.div>
 
-        {/* AIRPORT (Sân bay Tiếng Anh) - Bãi đất góc phải dưới */}
+        {/* AIRPORT (Sân bay Tiếng Anh) */}
         <motion.div 
+          onClick={() => setActiveSubject('english')}
           className="absolute top-[62%] right-[12%] flex flex-col items-center cursor-pointer group"
-          animate={{ scale: getScale(level), y: [0, -8, 0] }}
-          whileHover={{ scale: getScale(level) + 0.05 }}
+          animate={{ scale: getScale(englishLevel), y: [0, -8, 0] }}
+          whileHover={{ scale: getScale(englishLevel) + 0.05 }}
           transition={{ 
             y: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 },
             scale: { type: "spring", stiffness: 300, damping: 20 } 
           }}
           style={{ transformOrigin: 'bottom center' }}
-          drag
-          dragMomentum={false}
-          whileDrag={{ scale: getScale(level) + 0.1, zIndex: 100, opacity: 0.8 }}
         >
           <div className="relative w-[24vw] sm:w-[22vw] md:w-[320px] aspect-square drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)]">
             <Image 
@@ -118,7 +160,7 @@ export default function Home() {
             <span className="font-black text-white text-[10px] sm:text-lg tracking-wide uppercase drop-shadow-md whitespace-nowrap">Tiếng Anh</span>
           </div>
           <div className="absolute top-2 right-[-5%] bg-amber-400 text-amber-900 font-black text-sm sm:text-xl w-8 h-8 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white z-20">
-            {level}
+            {englishLevel}
           </div>
         </motion.div>
 
@@ -141,35 +183,24 @@ export default function Home() {
         <div className="flex flex-col items-end gap-3 pointer-events-auto">
           <div className="bg-gradient-to-b from-amber-400 to-amber-500 px-6 py-3 rounded-full shadow-[0_6px_0_#b45309] flex items-center gap-3 border-4 border-white transform transition hover:translate-y-1 hover:shadow-[0_2px_0_#b45309] cursor-pointer">
             <Coins className="text-amber-100 w-7 h-7 drop-shadow-md fill-amber-300" />
-            <span className="font-extrabold text-2xl text-amber-950 tracking-wide drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">1,250</span>
+            <span className="font-extrabold text-2xl text-amber-950 tracking-wide drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
+              {coins.toLocaleString()}
+            </span>
           </div>
           
-          <button className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border-4 border-white text-slate-500 hover:bg-slate-100 transition">
-            <Settings className="w-6 h-6" />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border-4 border-white text-slate-500 hover:text-sky-500 hover:bg-slate-100 transition active:scale-95"
+            >
+              {isMuted ? <VolumeX className="w-6 h-6 text-rose-400" /> : <Volume2 className="w-6 h-6 text-sky-500" />}
+            </button>
+            <button className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border-4 border-white text-slate-500 hover:bg-slate-100 transition active:scale-95">
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </header>
-
-      {/* Level Controller for testing */}
-      <div className="absolute top-1/2 right-2 sm:right-8 -translate-y-1/2 bg-white/90 backdrop-blur-md p-2 sm:p-4 rounded-3xl shadow-2xl border-2 sm:border-4 border-slate-200 flex flex-col items-center gap-2 sm:gap-4 z-50 scale-75 sm:scale-100 origin-right">
-        <span className="font-bold text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider text-center hidden sm:block">Tăng cấp<br/>Tòa nhà</span>
-        
-        <button 
-          onClick={() => setLevel(prev => Math.min(prev + 5, 99))} // Tăng 5 level một lần cho nhanh
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-full shadow-[0_4px_0_#166534] text-white font-black text-xl sm:text-2xl flex items-center justify-center hover:translate-y-1 hover:shadow-none transition active:bg-green-600"
-        >
-          +
-        </button>
-        
-        <div className="text-4xl font-black text-slate-800">{level}</div>
-        
-        <button 
-          onClick={() => setLevel(prev => Math.max(prev - 5, 1))}
-          className="w-12 h-12 bg-rose-500 rounded-full shadow-[0_4px_0_#9f1239] text-white font-black text-2xl flex items-center justify-center hover:translate-y-1 hover:shadow-none transition active:bg-rose-600"
-        >
-          -
-        </button>
-      </div>
 
       {/* Bottom Nav */}
       <div className="absolute bottom-2 sm:bottom-8 left-2 sm:left-8 z-50 scale-75 sm:scale-100 origin-bottom-left">
@@ -198,6 +229,27 @@ export default function Home() {
           </div>
         </motion.button>
       </div>
+
+      {/* Modal Chọn Chủ Đề */}
+      {activeSubject && !activeTopic && (
+        <TopicSelection
+          isOpen={true}
+          subject={activeSubject}
+          onClose={() => setActiveSubject(null)}
+          onSelectTopic={(topicId) => setActiveTopic(topicId)}
+        />
+      )}
+
+      {/* Modal Làm Bài Liên Tục */}
+      {activeSubject && activeTopic && (
+        <QuizSession 
+          isOpen={true}
+          subject={activeSubject}
+          topicId={activeTopic}
+          isMuted={isMuted}
+          onSessionEnd={handleSessionEnd}
+        />
+      )}
 
     </div>
   );
