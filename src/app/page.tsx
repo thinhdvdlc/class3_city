@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Coins, Settings, ShoppingBag, Map, Volume2, VolumeX } from 'lucide-react';
+import { User, Coins, Settings, ShoppingBag, Map, Volume2, VolumeX, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { Subject } from '@/data/questions';
 import { TopicId } from '@/data/generator';
@@ -16,6 +16,38 @@ export default function Home() {
 
   // Trạng thái (Level) của từng tòa nhà riêng biệt - BÂY GIỜ ĐƯỢC QUẢN LÝ QUA CURRENT_USER
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+
+  // Tự động đăng nhập
+  useEffect(() => {
+    const checkLogin = async () => {
+      const savedName = localStorage.getItem('saved_player_name');
+      if (savedName) {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('name', savedName)
+            .maybeSingle();
+          if (data) setCurrentUser(data as UserProfile);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      setIsCheckingLogin(false);
+    };
+    checkLogin();
+  }, []);
+
+  const handleLoginSuccess = (profile: UserProfile) => {
+    localStorage.setItem('saved_player_name', profile.name);
+    setCurrentUser(profile);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('saved_player_name');
+    setCurrentUser(null);
+  };
 
   // Điều khiển âm thanh toàn cục (Mặc định tắt do chính sách autoplay của trình duyệt)
   const [isMuted, setIsMuted] = useState(true);
@@ -85,8 +117,16 @@ export default function Home() {
     setActiveSubject(null);
   };
 
+  if (isCheckingLogin) {
+    return (
+      <div className="relative w-screen h-[100dvh] flex items-center justify-center bg-sky-200">
+        <span className="text-xl font-bold text-sky-800 animate-pulse">Đang vào Thành Phố...</span>
+      </div>
+    );
+  }
+
   if (!currentUser) {
-    return <LoginScreen onLoginSuccess={(profile) => setCurrentUser(profile)} />;
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
@@ -203,7 +243,7 @@ export default function Home() {
 
       {/* HUD (Heads Up Display) - Top Bar */}
       <header className="absolute top-2 sm:top-6 left-2 sm:left-6 right-2 sm:right-6 flex justify-between items-start z-50 pointer-events-none">
-        <div className="pointer-events-auto scale-75 sm:scale-100 origin-top-left">
+        <div className="pointer-events-auto scale-75 sm:scale-100 origin-top-left flex gap-2">
           <div className="bg-white/90 backdrop-blur-md px-2 py-2 rounded-[2rem] shadow-xl flex items-center gap-3 border-[4px] border-slate-200 transform transition hover:scale-105 cursor-pointer">
             <div className="w-14 h-14 bg-gradient-to-b from-sky-300 to-sky-500 rounded-full border-2 border-white flex items-center justify-center shadow-inner overflow-hidden">
               <User className="text-white w-8 h-8 drop-shadow-md" />
@@ -213,6 +253,13 @@ export default function Home() {
               <span className="font-extrabold text-xl text-slate-800 drop-shadow-sm leading-none tracking-wide">{currentUser.name}</span>
             </div>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="bg-white/90 backdrop-blur-md w-14 h-14 rounded-full shadow-lg border-[4px] border-slate-200 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition active:scale-95 group"
+            title="Đăng xuất"
+          >
+            <LogOut className="w-6 h-6 group-hover:-translate-x-1 transition" />
+          </button>
         </div>
 
         <div className="flex flex-col items-end gap-3 pointer-events-auto">
