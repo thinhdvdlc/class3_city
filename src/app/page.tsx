@@ -62,10 +62,10 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#86efac] font-sans select-none flex items-center justify-center p-2 sm:p-4 md:p-8">
+    <div className="relative w-screen h-[100dvh] overflow-hidden bg-[#86efac] font-sans select-none flex items-center justify-center">
       
-      {/* Khung Bản đồ Responsive (Luôn giữ đúng tỷ lệ 3:2) */}
-      <main className="relative w-full max-w-[1400px] aspect-[3/2] z-20 rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.4)] border-4 md:border-8 border-white/40 bg-sky-200">
+      {/* Khung Bản đồ Fullscreen (Mô phỏng object-fit: cover cho cả container) */}
+      <main className="relative flex-none min-w-full min-h-full aspect-[3/2] z-20">
         
         {/* Background Thành Phố */}
         <Image 
