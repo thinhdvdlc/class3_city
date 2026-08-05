@@ -5,10 +5,20 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export interface EquippedItems {
+  hair: string;
+  shirt: string;
+  glasses: string;
+  hat: string;
+}
+
 export interface UserProfile {
   name: string;
   coins: number;
   math_level: number;
   vietnamese_level: number;
   english_level: number;
+  gender: 'boy' | 'girl';
+  equipped_items: EquippedItems;
+  unlocked_items: string[];
 }

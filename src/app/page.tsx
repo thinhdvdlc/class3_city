@@ -9,6 +9,8 @@ import { TopicId } from '@/data/generator';
 import { TopicSelection } from '@/components/game/TopicSelection';
 import { QuizSession } from '@/components/game/QuizSession';
 import { LoginScreen } from '@/components/game/LoginScreen';
+import { AvatarShop } from '@/components/game/AvatarShop';
+import { AvatarSVG } from '@/components/avatar/AvatarSVG';
 import { startCityBGM, stopCityBGM } from '@/utils/sound';
 import { supabase, UserProfile } from '@/utils/supabase';
 
@@ -55,6 +57,7 @@ export default function Home() {
   // Điều khiển Luồng Trò chơi
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [activeTopic, setActiveTopic] = useState<TopicId | null>(null);
+  const [isShopOpen, setIsShopOpen] = useState(false);
 
   // Quản lý nhạc nền Thành phố
   useEffect(() => {
@@ -245,8 +248,8 @@ export default function Home() {
       <header className="absolute top-2 sm:top-6 left-2 sm:left-6 right-2 sm:right-6 flex justify-between items-start z-50 pointer-events-none">
         <div className="pointer-events-auto scale-75 sm:scale-100 origin-top-left flex gap-2">
           <div className="bg-white/90 backdrop-blur-md px-2 py-2 rounded-[2rem] shadow-xl flex items-center gap-3 border-[4px] border-slate-200 transform transition hover:scale-105 cursor-pointer">
-            <div className="w-14 h-14 bg-gradient-to-b from-sky-300 to-sky-500 rounded-full border-2 border-white flex items-center justify-center shadow-inner overflow-hidden">
-              <User className="text-white w-8 h-8 drop-shadow-md" />
+            <div className="w-14 h-14 bg-sky-200 rounded-full border-2 border-white flex items-center justify-center shadow-inner overflow-hidden">
+              <AvatarSVG gender={currentUser.gender} equipped={currentUser.equipped_items} className="w-[120%] h-[120%] mt-2" />
             </div>
             <div className="flex flex-col pr-4">
               <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest drop-shadow-sm">Thị trưởng</span>
@@ -299,6 +302,7 @@ export default function Home() {
 
       <div className="absolute bottom-2 sm:bottom-8 right-2 sm:right-8 z-50 scale-75 sm:scale-100 origin-bottom-right">
         <motion.button 
+          onClick={() => setIsShopOpen(true)}
           className="bg-gradient-to-b from-rose-500 to-rose-600 text-white p-2 sm:p-3 pl-4 sm:pl-6 rounded-full shadow-[0_8px_0_#881337] flex items-center gap-2 sm:gap-4 border-2 sm:border-4 border-white hover:translate-y-1 hover:shadow-[0_2px_0_#881337] transition group"
           whileHover={{ scale: 1.05 }}
         >
@@ -330,6 +334,19 @@ export default function Home() {
           topicId={activeTopic}
           isMuted={isMuted}
           onSessionEnd={handleSessionEnd}
+        />
+      )}
+
+      {/* Modal Cửa Hàng Avatar */}
+      {isShopOpen && (
+        <AvatarShop 
+          profile={currentUser}
+          onClose={(updatedProfile) => {
+            if (updatedProfile) {
+              setCurrentUser(updatedProfile);
+            }
+            setIsShopOpen(false);
+          }}
         />
       )}
 

@@ -9,6 +9,7 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<'boy' | 'girl'>('boy');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,7 +46,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           coins: 0,
           math_level: 1,
           vietnamese_level: 1,
-          english_level: 1
+          english_level: 1,
+          gender: gender,
+          equipped_items: {
+            hair: gender === 'boy' ? 'hair_boy_default' : 'hair_girl_default',
+            shirt: 'shirt_basic_blue',
+            glasses: 'none',
+            hat: 'none'
+          },
+          unlocked_items: ['hair_boy_default', 'hair_girl_default', 'shirt_basic_blue', 'shirt_basic_pink', 'none']
         };
 
         const { error: insertError } = await supabase
@@ -94,6 +103,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             disabled={isLoading}
             maxLength={20}
           />
+
+          <div className="flex gap-4 justify-center my-2">
+            <button
+              type="button"
+              onClick={() => setGender('boy')}
+              className={`flex-1 py-3 px-4 rounded-2xl border-4 transition font-bold flex items-center justify-center gap-2 ${gender === 'boy' ? 'bg-sky-100 border-sky-400 text-sky-700' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+            >
+              👦 Bé Trai
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender('girl')}
+              className={`flex-1 py-3 px-4 rounded-2xl border-4 transition font-bold flex items-center justify-center gap-2 ${gender === 'girl' ? 'bg-pink-100 border-pink-400 text-pink-700' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+            >
+              👧 Bé Gái
+            </button>
+          </div>
 
           {error && (
             <span className="text-rose-500 font-bold text-sm">{error}</span>
